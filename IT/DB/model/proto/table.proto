@@ -1,0 +1,15 @@
+syntax = "proto3"; 
+
+option go_package = "github.com/DiMalovanyy/University_Sem7/IT/DB/model/proto"; 
+
+import "data.proto";
+
+message Table {
+    string name = 1;
+    repeated Row rows = 2;
+}
+
+message Row {
+    repeated Data data = 1;
+}
+

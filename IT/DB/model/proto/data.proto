@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "github.com/DiMalovanyy/University_Sem7/IT/DB/model/proto"; 
+
+message Data {
+    oneof data {
+        int64 integerData = 1;
+        float floatData = 2;
+        string stringData = 3;
+        PictureData pictureData = 4;
+        IntervalData intervalData = 5;
+    }
+}
+
+message PictureData {
+    string pictureName = 1;
+    string pictureFormat = 2;
+}
+
+message IntervalData {
+    int64 fromVal = 1;
+    int64 toVal = 2;
+}
