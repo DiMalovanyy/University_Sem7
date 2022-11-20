@@ -2,13 +2,16 @@ syntax = "proto3";
 
 option go_package = "github.com/DiMalovanyy/University_Sem7/IT/DB/model/proto"; 
 
+import "google/protobuf/empty.proto";
+
 message Data {
     oneof data {
-        int64 integerData = 1;
-        float floatData = 2;
-        string stringData = 3;
-        PictureData pictureData = 4;
-        IntervalData intervalData = 5;
+        google.protobuf.Empty emptyData = 1;
+        int64 integerData = 2;
+        float floatData = 3;
+        string stringData = 4;
+        PictureData pictureData = 5;
+        IntervalData intervalData = 6;
     }
 }
 

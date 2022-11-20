@@ -19,14 +19,14 @@ type Database struct {
 
 func NewDatabase(name string, baseLogger *logrus.Logger) (*Database, error) {
     logger := baseLogger.WithFields(logrus.Fields{"database": name})
-    databasePb := pb.Database{
+    databasePb := &pb.Database{
         Name: name,
         Tables: []*pb.Table{},
     }
 
     logger.Infof("Databse %s created", name)
     return &Database{
-        database: &databasePb, 
+        database: databasePb, 
         logger: logger,
     }, nil
 }
@@ -51,6 +51,20 @@ func LoadDatabase(directory string, name string, baseLogger* logrus.Logger) (*Da
         database: databasePb,
         logger: logger,
     }, nil
+}
+
+func (db *Database) ChangeName(newName string) {
+    db.logger = db.logger.WithFields(logrus.Fields{"database": newName})
+    db.logger.Debugf("Database name Changed %s -> %s.", db.database.Name, newName)
+    db.database.Name = newName
+}
+
+func (db Database) GetTables() []string {
+    tableNames := []string{}
+    for _, tablePb := range db.database.Tables {
+        tableNames = append(tableNames, tablePb.Name)
+    }
+    return tableNames
 }
 
 func (db *Database) Save(directory string) error {
@@ -102,14 +116,16 @@ func (db *Database) AddTable(tableName string) (*table.Table, error) {
         Name: tableName,
         Rows: []*pb.Row{},
     }
+
     db.database.Tables = append(db.database.Tables, tablePb)
     db.logger.Infof("Table %s created.", tableName)
-    return table.GetTable(tablePb, db.logger)
+
+    tb, err := table.GetTable(tablePb, db.logger)
+    return tb, err
 }
 
 func (db *Database) Dump(writer io.Writer) {
     writer.Write([]byte("\tDatabase: " + db.database.Name + "\n\n"))
-
     for _, tablePb := range db.database.Tables {
         table, err := table.GetTable(tablePb, db.logger)
         if (err != nil) {
