@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "github.com/DiMalovanyy/University_Sem7/IT/DB/model/proto"; 
 
-import "table.proto";
+import public "table.proto";
 
 message Database {
     string name = 1;

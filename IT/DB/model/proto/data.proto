@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "github.com/DiMalovanyy/University_Sem7/IT/DB/model/proto"; 
 
-import "google/protobuf/empty.proto";
+import public "google/protobuf/empty.proto";
 
 message Data {
     oneof data {

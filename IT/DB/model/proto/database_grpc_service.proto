@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+option go_package = "github.com/DiMalovanyy/University_Sem7/IT/DB/model/proto"; 
+
+import "database.proto";
+import "google/api/annotations.proto";
+
+service DatabaseService {
+    rpc GetDatabase(GetDatabaseRequest) returns (Database) {
+        option (google.api.http) = {
+            get: "/v1/api/database/{databaseName}"
+        };
+    }
+    rpc LoadDatabase(LoadDatabaseRequest) returns (Database) {
+        option (google.api.http) = {
+            get: "/v1/api/database/load/{directory}/{filaname}"
+        };
+    }
+    rpc SaveDatabase(SaveDatabaseRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/v1/api/database/save/{directory}/{databaseName}"
+        };
+    }
+
+
+    rpc GetTable(GetTableRequest) returns (Table) {
+        option (google.api.http) = {
+            get: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}"
+        };
+    }
+    rpc DeleteTable(DeleteTableRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}"
+        };
+    }
+    rpc AppendRow(AppendRowRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}/row"
+        };
+    }
+    rpc AppendColumn(AppendColumnRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}/column"
+        };
+    }
+
+
+    rpc ChangeData(ChangeDataRequest) returns  (google.protobuf.Empty) {
+        option (google.api.http) = {
+            patch: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}"
+            body: "tableData"
+        };
+    }
+}
+
+message GetDatabaseRequest {
+    string databaseName = 1;
+    bool createIfNotExist = 2;
+}
+
+message LoadDatabaseRequest {
+    string directory = 1;
+    string filaname = 2;
+} 
+
+message SaveDatabaseRequest {
+    string directory = 1;
+    string databaseName = 2;
+}
+
+message TableIdentifier {
+    string databaseName = 1;
+    string tableName = 2;
+}
+
+message GetTableRequest {
+    TableIdentifier tableIdentifier = 1;
+    bool createIfNotExist = 2;
+}
+
+message DeleteTableRequest {
+    TableIdentifier tableIdentifier = 1;
+}
+
+message AppendRowRequest {
+    TableIdentifier tableIdentifier = 1;
+}
+
+message AppendColumnRequest {
+    TableIdentifier tableIdentifier = 1;
+}
+
+message TableData {
+    Data newData = 1;
+    int64 rowIndex = 2;
+    int64 columnIndex = 3;
+}
+
+message ChangeDataRequest {
+    TableIdentifier tableIdentifier = 1;
+    TableData tableData = 2;
+}

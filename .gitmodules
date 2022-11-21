@@ -1,0 +1,3 @@
+[submodule "IT/DB/external/googleapis"]
+	path = IT/DB/external/googleapis
+	url = https://github.com/googleapis/googleapis.git

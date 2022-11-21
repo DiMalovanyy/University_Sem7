@@ -17,7 +17,7 @@ type Database struct {
     logger *logrus.Entry
 }
 
-func NewDatabase(name string, baseLogger *logrus.Logger) (*Database, error) {
+func NewDatabase(name string, baseLogger *logrus.Entry) (*Database, error) {
     logger := baseLogger.WithFields(logrus.Fields{"database": name})
     databasePb := &pb.Database{
         Name: name,
@@ -31,7 +31,7 @@ func NewDatabase(name string, baseLogger *logrus.Logger) (*Database, error) {
     }, nil
 }
 
-func LoadDatabase(directory string, name string, baseLogger* logrus.Logger) (*Database, error) {
+func LoadDatabase(directory string, name string, baseLogger* logrus.Entry) (*Database, error) {
     logger := baseLogger.WithFields(logrus.Fields{"database": name})
 
     filepath := directory + "/" + name
@@ -53,18 +53,36 @@ func LoadDatabase(directory string, name string, baseLogger* logrus.Logger) (*Da
     }, nil
 }
 
+func (db Database) GetName() string {
+    return db.database.Name 
+}
+
+func (db Database) GetModel() *pb.Database {
+    return db.database
+}
+
 func (db *Database) ChangeName(newName string) {
     db.logger = db.logger.WithFields(logrus.Fields{"database": newName})
     db.logger.Debugf("Database name Changed %s -> %s.", db.database.Name, newName)
     db.database.Name = newName
 }
 
-func (db Database) GetTables() []string {
+func (db Database) GetTableNames() []string {
     tableNames := []string{}
     for _, tablePb := range db.database.Tables {
         tableNames = append(tableNames, tablePb.Name)
     }
     return tableNames
+}
+
+func (db Database) GetTableModel(tableName string) (*pb.Table, error) {
+    for _, tablePb := range db.database.Tables {
+        if tablePb.Name == tableName {
+            return tablePb, nil
+        }
+    }
+    err := fmt.Errorf("Could not found %s table in database %s", tableName, db.GetName())
+    return nil, err
 }
 
 func (db *Database) Save(directory string) error {
