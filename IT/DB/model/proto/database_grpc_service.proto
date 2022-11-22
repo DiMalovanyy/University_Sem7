@@ -6,6 +6,11 @@ import "database.proto";
 import "google/api/annotations.proto";
 
 service DatabaseService {
+    rpc GetDatabaseList(google.protobuf.Empty) returns (GetDatabaseListResponse) {
+        option (google.api.http) = {
+            get: "/v1/api/database"
+        };
+    }
     rpc GetDatabase(GetDatabaseRequest) returns (Database) {
         option (google.api.http) = {
             get: "/v1/api/database/{databaseName}"
@@ -51,6 +56,10 @@ service DatabaseService {
             body: "tableData"
         };
     }
+}
+
+message GetDatabaseListResponse {
+    repeated string databaseNames = 1;
 }
 
 message GetDatabaseRequest {

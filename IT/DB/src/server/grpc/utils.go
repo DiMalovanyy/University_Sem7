@@ -7,7 +7,6 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-
 func getContextLogger(ctx context.Context, baseLogger *logrus.Entry) *logrus.Entry {
     p, _ := peer.FromContext(ctx)
     address := p.Addr.String()

@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 
 	proto "github.com/DiMalovanyy/University_Sem7/IT/DB/genproto"
 	"github.com/DiMalovanyy/University_Sem7/IT/DB/src/database"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
+	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -32,22 +35,56 @@ func NewDatabaseServer() *DatabaseServer {
 }
 
 func (server *DatabaseServer) ListenAndServe(port string) error {
-    lis, err := net.Listen("tcp", "localhost:" + port)
+    s := grpc.NewServer()
+    proto.RegisterDatabaseServiceServer(s, server)
+    // Create mux for reverse grpc-gaateway proxy
+    mux := runtime.NewServeMux()
+    err := proto.RegisterDatabaseServiceHandlerFromEndpoint(context.Background(), mux, "localhost:" + port, []grpc.DialOption{grpc.WithInsecure()})
     if err != nil {
-        server.logger.Fatalf("Could not Listen port: %s. Error: %v", port, err)
+        err = fmt.Errorf("Error while creating Service endpoint: %v", err)
+        server.logger.Error(err)
         return err
     }
 
-    s := grpc.NewServer()
-    proto.RegisterDatabaseServiceServer(s, server)
+    // Creating HTTP server
+    httpServer := http.Server{
+        Handler: mux,
+    }
+
+    lis, err := net.Listen("tcp", ":" + port)
+    if err != nil {
+        err = fmt.Errorf("Error while creating listener for port %s. Error: %v", port, err)
+        server.logger.Error(err)
+        return err
+    }
+
+    cm := cmux.New(lis)
+    httpListener := cm.Match(cmux.HTTP1Fast())
+    grpcListener := cm.Match(cmux.HTTP2())
+
+    go httpServer.Serve(httpListener)
+    server.logger.Infof("RESTful gRPC-gateway reverse proxy server listening on %s", port)
+
+    go s.Serve(grpcListener)
     server.logger.Infof("Database gRPC server listening on %s", port)
-	if err := s.Serve(lis); err != nil {
+
+	if err := cm.Serve(); err != nil {
 		server.logger.Fatalf("failed to serve: %v", err)
         return err
 	}
     return nil
 }
 
+func (server *DatabaseServer) GetDatabaseList(ctx context.Context, in *emptypb.Empty) (*proto.GetDatabaseListResponse, error) {
+    logger := getContextLogger(ctx, server.logger)
+    logger.Infof("GetDatabaseList request", in)
+
+    list := &proto.GetDatabaseListResponse{}
+    for _, db := range server.databases {
+        list.DatabaseNames = append(list.DatabaseNames, db.GetName())
+    }
+    return list, nil
+}
 func (server *DatabaseServer) GetDatabase(ctx context.Context, in *proto.GetDatabaseRequest) (*proto.Database, error) {
     logger := getContextLogger(ctx, server.logger)
     logger.Infof("GetDatabase request: %+v", in)
