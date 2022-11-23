@@ -1,0 +1,53 @@
+body {
+    margin: 0;
+}
+
+div#app {
+    position: relative;
+    height: auto !important;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+div#header {
+    flex: 1;
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: 1em;
+}
+
+div#content {
+    flex: 20;
+    padding-bottom: 7%;
+    padding-left: 1em;
+    padding-right: 1em;
+    min-height: auto;
+    display: flex;
+}
+
+div#footer {
+    flex: 1;
+    position: absolute;
+    width: 100%;
+    bottom: 0; /* stick to bottom */
+    min-height: 10%;
+}
+
+html, body, #root{
+  margin: 0;
+  padding: 0;
+  height: 100%; /* needed for container min-height */
+}
+
+div#table {
+    margin-left: 5%;
+}
+
+
+div#table-container {
+    border-radius: 20px;
+    background-color: #e9edc9;
+    -webkit-box-shadow: 0px 3px 5px 0px rgba(142,149,121,1);
+    -moz-box-shadow: 0px 3px 5px 0px rgba(142,149,121,1);
+    box-shadow: 0px 3px 5px 0px rgba(142,149,121,1);
+}
