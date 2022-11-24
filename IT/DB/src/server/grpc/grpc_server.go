@@ -3,11 +3,13 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 
 	proto "github.com/DiMalovanyy/University_Sem7/IT/DB/genproto"
 	"github.com/DiMalovanyy/University_Sem7/IT/DB/src/database"
+	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
@@ -34,12 +36,12 @@ func NewDatabaseServer() *DatabaseServer {
     }
 }
 
-func (server *DatabaseServer) ListenAndServe(port string) error {
+func (server *DatabaseServer) ListenAndServe(port string, openapiPath string) error {
     s := grpc.NewServer()
     proto.RegisterDatabaseServiceServer(s, server)
     // Create mux for reverse grpc-gaateway proxy
-    mux := runtime.NewServeMux()
-    err := proto.RegisterDatabaseServiceHandlerFromEndpoint(context.Background(), mux, "localhost:" + port, []grpc.DialOption{grpc.WithInsecure()})
+    grpcMux := runtime.NewServeMux()
+    err := proto.RegisterDatabaseServiceHandlerFromEndpoint(context.Background(), grpcMux, "localhost:" + port, []grpc.DialOption{grpc.WithInsecure()})
     if err != nil {
         err = fmt.Errorf("Error while creating Service endpoint: %v", err)
         server.logger.Error(err)
@@ -47,8 +49,22 @@ func (server *DatabaseServer) ListenAndServe(port string) error {
     }
 
     // Creating HTTP server
+    r := mux.NewRouter()
+    r.PathPrefix("/").Handler(grpcMux)
+    grpcMux.HandlePath("GET", "/openapi.json", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+        server.logger.Info("OpenApi json requested")
+        openApiBytes, err := ioutil.ReadFile(openapiPath)
+        if err != nil {
+            w.WriteHeader(http.StatusNotFound)
+            w.Write([]byte(err.Error()))
+            return
+        }
+        w.Header().Set("Content-Type", "application/octet-stream")
+        w.Write(openApiBytes)
+    })
+
     httpServer := http.Server{
-        Handler: mux,
+        Handler: r,
     }
 
     lis, err := net.Listen("tcp", ":" + port)
