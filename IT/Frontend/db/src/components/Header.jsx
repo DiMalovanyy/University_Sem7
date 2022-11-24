@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { theme } from '../Theme';
+import { AddDatabaseDialog } from './dialogs/AddDatabase';
 
 
 const DatabaseList = (props) => {
@@ -60,6 +61,15 @@ const DatabaseList = (props) => {
 const Header = (props) => {
     let databases = ["test1", "test2", "test_db"]
     const theme = useTheme()
+
+    const [addDatabaseDialogOpen, setAddDatabaseDialogOpen] = useState(false)
+    const handleAddDatabaseClick = () => {
+        setAddDatabaseDialogOpen(true);
+    }
+    const handleAddDatabaseDialogClose = () => {
+        setAddDatabaseDialogOpen(false);
+    }
+
     return (
         <Box>
             <Box sx={{
@@ -72,9 +82,10 @@ const Header = (props) => {
                 display: "flex",
                 flexDirection: "row",
             }} backgroundColor={theme.palette.primary.main}>
-                <Button color="secondary" variant="outlined" size="large">Add Database</Button>
+                <Button color="secondary" variant="outlined" size="large" onClick={handleAddDatabaseClick}>Add Database</Button>
             </Box>
             <DatabaseList handleUpdateDatabase={props.handleUpdateDatabase} databaseList={databases} />
+            <AddDatabaseDialog open={addDatabaseDialogOpen} onClose={handleAddDatabaseDialogClose} />
         </Box>
     );
 }

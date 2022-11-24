@@ -51,3 +51,18 @@ div#table-container {
     -moz-box-shadow: 0px 3px 5px 0px rgba(142,149,121,1);
     box-shadow: 0px 3px 5px 0px rgba(142,149,121,1);
 }
+
+div#add-database-dialog {
+    background-color: #e9edc9;
+}
+
+div#add-database-tabpanel {
+    min-height: 14em;
+}
+
+div#add-table-dialog {
+    min-height: 14em;
+    background-color: #e9edc9;
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+}

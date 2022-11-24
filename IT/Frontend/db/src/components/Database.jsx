@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DatabaseTable from "./Table";
+import { AddTableDialog } from "./dialogs/AddTable";
 
 
 const Database = (props) => {
@@ -21,6 +22,15 @@ const Database = (props) => {
         setTableTab(newTableTab)
     };
     
+
+    const [addTableDialogOpen, setAddTableDialogOpen] = useState(false)
+    const handleAddTableClick = () => {
+        setAddTableDialogOpen(true);
+    }
+    const handleAddTableDialogClose = () => {
+        setAddTableDialogOpen(false);
+    }
+
     if (!props.database.hasOwnProperty('tables')) {
         return <Box />
     }
@@ -45,7 +55,7 @@ const Database = (props) => {
                         <Typography variant="h6" color="secondary">Tables</Typography>
                     </Box>
                     <Box>
-                        <IconButton color="secondary" >
+                        <IconButton color="secondary" onClick={handleAddTableClick} >
                             <AddCircleIcon />
                         </IconButton>
                     </Box> 
@@ -68,7 +78,7 @@ const Database = (props) => {
             }}>
                 <DatabaseTable table={props.database['tables'][tableTab]} />
             </Box>
-        
+            <AddTableDialog open={addTableDialogOpen} onClose={handleAddTableDialogClose} />
         </Box> 
     );
 

@@ -39,7 +39,7 @@ const dataToStr = (data) => {
         case 'floatData': return data.floatData;
         case 'stringData': return data.stringData;
         case 'pictureData': return "Img: " + data.pictureData.pictureName + "." + data.pictureData.pictureFormat;
-        case 'intervalData': return "Interval: " + data.intervalData.fromVal + data.intervalData.toVal;
+        case 'intervalData': return "Interval: " + data.intervalData.fromVal + " - " +  data.intervalData.toVal;
         default: return "undefined";
     }
 }
@@ -53,7 +53,6 @@ export const Data = (props) => {
         </Box> 
     );
 };
-
 
 export const DataPreview = (props) => {
     const theme = useTheme()
@@ -70,7 +69,6 @@ export const DataPreview = (props) => {
                     margin: 'auto',
                 }}>
                     <Typography>{"(" + props.columnType + ")"}</Typography>
-                    {/* <Typography>{props.columnIdx}</Typography>  */}
                 </Box>
                 <Box sx={{
                     flex: 1,

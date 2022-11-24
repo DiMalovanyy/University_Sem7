@@ -25,7 +25,7 @@ export const test_database = {
                 {
                     "data": [
                         {
-                            "integerData": "2"
+                            "integerData": "101"
                         },
                         {
                             "pictureData": {
@@ -59,7 +59,7 @@ export const test_database = {
                 {
                     "data": [
                         {
-                            "integerData": "1"
+                            "integerData": "77"
                         },
                         {
                             "pictureData": {
@@ -75,12 +75,12 @@ export const test_database = {
                 {
                     "data": [
                         {
-                            "integerData": "2"
+                            "integerData": "4"
                         },
                         {
                             "pictureData": {
-                                "pictureName": "pic2",
-                                "pictureFormat": "png"
+                                "pictureName": "some",
+                                "pictureFormat": "jpeg"
                             }
                         },
                         {
@@ -97,7 +97,10 @@ export const test_database = {
                             "emptyData": {}
                         },
                         {
-                            "emptyData": {}
+                            "intervalData": {
+                                "fromVal": 105,
+                                "toVal": 107,
+                            }
                         }
                     ]
                 }
