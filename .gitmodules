@@ -1,3 +1,6 @@
 [submodule "IT/DB/external/googleapis"]
 	path = IT/DB/external/googleapis
 	url = https://github.com/googleapis/googleapis.git
+[submodule "IT/DB/external/grpc-gateway"]
+	path = IT/DB/external/grpc-gateway
+	url = https://github.com/grpc-ecosystem/grpc-gateway.git

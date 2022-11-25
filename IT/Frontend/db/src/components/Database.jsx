@@ -9,7 +9,7 @@ import {
 import { 
     Box,
 } from "@mui/system";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DatabaseTable from "./Table";
 import { AddTableDialog } from "./dialogs/AddTable";
@@ -29,9 +29,17 @@ const Database = (props) => {
         setAddTableDialogOpen(false);
     }
 
-    const [ tables, setTables] = useState( props.database.hasOwnProperty('tables') ? props.database.tables : []);
+    const [ tables, setTables] = useState([]);
+
+    useEffect(() => {
+        if (props.database.hasOwnProperty('tables')) {
+            setTables(props.database.tables);
+        }
+    },[props.database]);
+
 
     const handleNewTableAdd = (newTableData) => {
+        console.log(newTableData);
         setTables((prev) => [...prev, newTableData]);
     }
 

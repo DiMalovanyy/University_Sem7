@@ -25,7 +25,11 @@ export const AddTableDialog = (props) => {
     const [addTableCall, addTableResponse ] = useOperationMethod('DatabaseService_GetTable');
     const [addTableButtonClicked, setAddTableButtonClicked] = useState(false);
     const handleAddTable = () => {
-        addTableCall({'tableIdentifier.databaseName': databaseName, 'tableIdentifier.tableName': tableName});
+        addTableCall([
+            {name: 'databaseName', value: databaseName, in: "path"},
+            {name: 'tableName', value: tableName, in: "path"},
+            {name: 'createIfNotExist', value: true, in: "query"},
+        ]);
         setAddTableButtonClicked(true);
         onClose();
     };
@@ -41,7 +45,7 @@ export const AddTableDialog = (props) => {
                 setAddTableButtonClicked(false);
                 setTableName("");
         }
-    }, addTableResponse)
+    }, [addTableResponse]);
 
     return (
         <Dialog onClose={handleClose} open={open}>

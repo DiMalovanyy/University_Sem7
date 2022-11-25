@@ -4,6 +4,8 @@ option go_package = "github.com/DiMalovanyy/University_Sem7/IT/DB/model/proto";
 
 import "database.proto";
 import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
 
 service DatabaseService {
     rpc GetDatabaseList(google.protobuf.Empty) returns (GetDatabaseListResponse) {
@@ -31,6 +33,7 @@ service DatabaseService {
     rpc GetTable(GetTableRequest) returns (Table) {
         option (google.api.http) = {
             get: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}"
+            
         };
     }
     rpc DeleteTable(DeleteTableRequest) returns (google.protobuf.Empty) {
@@ -78,8 +81,8 @@ message SaveDatabaseRequest {
 }
 
 message TableIdentifier {
-    string databaseName = 1;
-    string tableName = 2;
+    string databaseName = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {field_configuration: {path_param_name: "databaseName"}}];
+    string tableName = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {field_configuration: {path_param_name: "tableName"}}];
 }
 
 message GetTableRequest {
