@@ -21,14 +21,18 @@ const Database = (props) => {
     const handleTableTabChanged = (event, newTableTab) => {
         setTableTab(newTableTab)
     };
-    
-
     const [addTableDialogOpen, setAddTableDialogOpen] = useState(false)
     const handleAddTableClick = () => {
         setAddTableDialogOpen(true);
     }
     const handleAddTableDialogClose = () => {
         setAddTableDialogOpen(false);
+    }
+
+    const [ tables, setTables] = useState( props.database.hasOwnProperty('tables') ? props.database.tables : []);
+
+    const handleNewTableAdd = (newTableData) => {
+        setTables((prev) => [...prev, newTableData]);
     }
 
     if (!props.database.hasOwnProperty('tables')) {
@@ -67,7 +71,7 @@ const Database = (props) => {
                     onChange={handleTableTabChanged}
                 >
                 { 
-                    props.database.hasOwnProperty('tables') && props.database['tables'].map((tableVal, tableIdx) => (
+                    tables.map((tableVal, tableIdx) => (
                     <Tab label={tableVal.name} key={tableIdx} />
                 ))}
                 </Tabs>
@@ -76,9 +80,9 @@ const Database = (props) => {
             <Box sx={{
                 flex: 20,
             }}>
-                <DatabaseTable table={props.database['tables'][tableTab]} />
+                <DatabaseTable table={tables[tableTab]} />
             </Box>
-            <AddTableDialog open={addTableDialogOpen} onClose={handleAddTableDialogClose} />
+            <AddTableDialog open={addTableDialogOpen} onNewTableAdd={handleNewTableAdd} onClose={handleAddTableDialogClose} databaseName={props.database.name} />
         </Box> 
     );
 

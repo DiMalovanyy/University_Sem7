@@ -6,14 +6,42 @@ import {
     TextField,
     Button,
 } from "@mui/material";
+import { useEffect, useState } from "react";
+
+import { useOperationMethod } from 'react-openapi-client';
 
 
 export const AddTableDialog = (props) => {
-    const { onClose, open } = props;
+    const { onClose, open, onNewTableAdd, databaseName} = props;
 
     const handleClose = () => {
         onClose();
     }
+
+    const [tableName, setTableName ] = useState("")
+    const handleChangeTableName = (event) => {
+        setTableName(event.target.value);
+    }
+    const [addTableCall, addTableResponse ] = useOperationMethod('DatabaseService_GetTable');
+    const [addTableButtonClicked, setAddTableButtonClicked] = useState(false);
+    const handleAddTable = () => {
+        addTableCall({'tableIdentifier.databaseName': databaseName, 'tableIdentifier.tableName': tableName});
+        setAddTableButtonClicked(true);
+        onClose();
+    };
+
+    useEffect(() => {
+        if (
+            !addTableResponse.error && 
+            !addTableResponse.loading && 
+            addTableResponse.data &&
+            tableName != "" && 
+            addTableButtonClicked) {
+                onNewTableAdd(addTableResponse.data);
+                setAddTableButtonClicked(false);
+                setTableName("");
+        }
+    }, addTableResponse)
 
     return (
         <Dialog onClose={handleClose} open={open}>
@@ -25,13 +53,13 @@ export const AddTableDialog = (props) => {
                 </DialogTitle>
                 <Box>
                     <Box>
-                        <TextField label="Name" variant="outlined" />
+                        <TextField label="Name" variant="outlined" value={tableName} onChange={handleChangeTableName} />
                     </Box>
                     <Box sx={{
                         position: "absolute",
                         bottom: "1em",
                     }}>
-                        <Button variant="contained">Add Table</Button>
+                        <Button variant="contained" onClick={handleAddTable}>Add Table</Button>
                     </Box>
                 </Box>
             </Box>

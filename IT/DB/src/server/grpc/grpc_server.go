@@ -15,6 +15,8 @@ import (
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/rs/cors"
 )
 
 
@@ -23,9 +25,10 @@ type DatabaseServer struct {
 
     databases []*database.Database
     logger* logrus.Entry
+    backendDir string
 }
 
-func NewDatabaseServer() *DatabaseServer {
+func NewDatabaseServer(backendDir string) *DatabaseServer {
     logger := logrus.New()
     logger.SetLevel(logrus.DebugLevel)
     loggerEnt := logger.WithFields(logrus.Fields{"server": "grpc"})
@@ -33,10 +36,13 @@ func NewDatabaseServer() *DatabaseServer {
     return &DatabaseServer{
         databases: make([]*database.Database, 0),
         logger: loggerEnt,
+        backendDir: backendDir,
     }
 }
 
-func (server *DatabaseServer) ListenAndServe(port string, openapiPath string) error {
+func (server *DatabaseServer) ListenAndServe(port string) error {
+    openapiPath := server.backendDir + "/genproto/database_grpc_service.swagger.json"
+    staticDirPath := server.backendDir + "/frontend_build";
     s := grpc.NewServer()
     proto.RegisterDatabaseServiceServer(s, server)
     // Create mux for reverse grpc-gaateway proxy
@@ -47,11 +53,17 @@ func (server *DatabaseServer) ListenAndServe(port string, openapiPath string) er
         server.logger.Error(err)
         return err
     }
+    
+    c := cors.New(cors.Options{
+        AllowedOrigins: []string{"*"},
+        AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE", "PATCH"},
+        AllowedHeaders: []string{"Accept", "content-type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization"},
+    })
 
     // Creating HTTP server
     r := mux.NewRouter()
-    r.PathPrefix("/").Handler(grpcMux)
-    grpcMux.HandlePath("GET", "/openapi.json", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+    r.PathPrefix("/v1/api/").Handler(grpcMux)
+    grpcMux.HandlePath("GET", "/v1/api/openapi.json", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
         server.logger.Info("OpenApi json requested")
         openApiBytes, err := ioutil.ReadFile(openapiPath)
         if err != nil {
@@ -63,8 +75,26 @@ func (server *DatabaseServer) ListenAndServe(port string, openapiPath string) er
         w.Write(openApiBytes)
     })
 
+    /*
+    r.PathPrefix("/").Handler(grpcMux)
+    grpcMux.HandlePath("GET", "/", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+        w.Header().Add("Content Type", "text/html")
+        switch r.Method {
+            case "GET": {
+                server.logger.Debugf("Requested static data from %s", staticDirPath)
+                if r.URL.Path == "" || r.URL.Path == "/" {
+                    http.ServeFile(w, r, path.Join(staticDirPath, "index.html"))
+                } else {
+                    http.ServeFile(w, r, path.Join(staticDirPath, r.URL.Path))
+                }
+            }
+        }
+    })
+    */
+    r.PathPrefix("/").Handler(http.FileServer(http.Dir(staticDirPath)))
+    
     httpServer := http.Server{
-        Handler: r,
+        Handler: c.Handler(r),
     }
 
     lis, err := net.Listen("tcp", ":" + port)
@@ -128,7 +158,8 @@ func (server *DatabaseServer) LoadDatabase(ctx context.Context, in *proto.LoadDa
     logger := getContextLogger(ctx, server.logger)
     logger.Infof("LoadDatabase request: %+v", in)
 
-    newDb, err := database.LoadDatabase(in.Directory, in.Filaname, server.logger)
+    loadDir := server.backendDir + "/" + in.Directory
+    newDb, err := database.LoadDatabase(loadDir, in.Filaname, server.logger)
     if err != nil {
         err := fmt.Errorf("Error while loading database from %s/%s: %v", in.Directory, in.Filaname, err)
         logger.Error(err)

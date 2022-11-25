@@ -1,6 +1,9 @@
 import { IconButton, Typography, useTheme } from "@mui/material";
 import { Box } from "@mui/system"
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import { useOperation, OpenAPIContext } from 'react-openapi-client';
+import { useContext } from "react";
+
 
 const GetColumnFromRows = (rows, columnIdx) => {
     let result = []
@@ -55,6 +58,7 @@ export const Data = (props) => {
 };
 
 export const DataPreview = (props) => {
+
     const theme = useTheme()
     return (
         <Box id="data-preview">

@@ -7,20 +7,25 @@ import {
     ThemeProvider,
     Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { theme } from '../Theme';
 import { AddDatabaseDialog } from './dialogs/AddDatabase';
 
+import { useOperationMethod } from 'react-openapi-client';
+
 
 const DatabaseList = (props) => {
+    
     const theme = useTheme();
-    let databaseList = props.databaseList
+    const [databaseTab, setDatabaseTab] = useState(-1);
 
-    const [databaseTab, setDatabaseTab] = useState(-1)
+    let databaseList = props.databaseList;
+
     const handleDatabaseTabChanged = (event, newDatabaseTab) => {
         setDatabaseTab(newDatabaseTab);
-        props.handleUpdateDatabase(databaseList[databaseTab])
+        props.handleUpdateDatabase(databaseList[newDatabaseTab])
     };
+    
 
     return (
         <Box sx={{
@@ -49,7 +54,7 @@ const DatabaseList = (props) => {
                     value={databaseTab}
                     onChange={handleDatabaseTabChanged}
                     >
-                    {props.databaseList.map((databaseVal, databaseIdx) => (
+                    {databaseList.map((databaseVal, databaseIdx) => (
                         <Tab label={databaseVal} key={databaseIdx}/>
                     ))}
                 </Tabs> 
@@ -59,8 +64,8 @@ const DatabaseList = (props) => {
 }
 
 const Header = (props) => {
-    let databases = ["test1", "test2", "test_db"]
-    const theme = useTheme()
+    const [getDatabaseCall, getDatabaseListResponse] = useOperationMethod('DatabaseService_GetDatabaseList');
+    const theme = useTheme();
 
     const [addDatabaseDialogOpen, setAddDatabaseDialogOpen] = useState(false)
     const handleAddDatabaseClick = () => {
@@ -68,6 +73,39 @@ const Header = (props) => {
     }
     const handleAddDatabaseDialogClose = () => {
         setAddDatabaseDialogOpen(false);
+    }  
+
+
+    const [newDatabaseName, setNewDatabaseName] = useState("");
+    const [databaseList, setDatabaseList] = useState([]);
+
+    useEffect(() => {
+        getDatabaseCall();
+    }, []);
+
+    useEffect(() => {
+        if (!getDatabaseListResponse.loading && 
+            !getDatabaseListResponse.error && 
+            getDatabaseListResponse.data) {
+
+            if (databaseList.length === 0) {
+                setDatabaseList(getDatabaseListResponse.data.databaseNames);
+            }
+
+        }
+    }, [getDatabaseListResponse]);
+
+    useEffect(() => {
+        if (newDatabaseName !== "") {
+            if (!databaseList.includes(newDatabaseName)) {
+                setDatabaseList((prev) => [...prev, newDatabaseName]);
+                setNewDatabaseName("");
+            }
+        }
+    }, [newDatabaseName])
+
+    const addDatabaseToList = (databaseName) => {
+        setNewDatabaseName(databaseName);
     }
 
     return (
@@ -84,8 +122,11 @@ const Header = (props) => {
             }} backgroundColor={theme.palette.primary.main}>
                 <Button color="secondary" variant="outlined" size="large" onClick={handleAddDatabaseClick}>Add Database</Button>
             </Box>
-            <DatabaseList handleUpdateDatabase={props.handleUpdateDatabase} databaseList={databases} />
-            <AddDatabaseDialog open={addDatabaseDialogOpen} onClose={handleAddDatabaseDialogClose} />
+            <DatabaseList 
+                handleUpdateDatabase={props.handleUpdateDatabase} 
+                databaseList={databaseList}
+            />
+            <AddDatabaseDialog open={addDatabaseDialogOpen} onClose={handleAddDatabaseDialogClose} onAddNewDatabase={addDatabaseToList}/>
         </Box>
     );
 }

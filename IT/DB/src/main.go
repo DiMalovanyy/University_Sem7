@@ -1,20 +1,23 @@
 package main
 
 import (
-	"os"
+	"flag"
+	"fmt"
 
 	grpcServer "github.com/DiMalovanyy/University_Sem7/IT/DB/src/server/grpc"
 )
 
 func main() {
+    backendDir := flag.String("dir", "", "Backend dir") 
+    flag.Parse()
 
-    currentPath, err := os.Getwd()
-    if err != nil {
+    if backendDir == nil || *backendDir == "" {
+        err := fmt.Errorf("You should provide --dir argument")
         panic(err)
     }
-    openApiPath := currentPath + "/genproto/database_grpc_service.swagger.json"
-    databaseServer := grpcServer.NewDatabaseServer()
-    if err := databaseServer.ListenAndServe("50051", openApiPath); err != nil {
+
+    databaseServer := grpcServer.NewDatabaseServer(*backendDir)
+    if err := databaseServer.ListenAndServe("50051"); err != nil {
         panic(err)
     }
 }
