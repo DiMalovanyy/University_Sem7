@@ -75,22 +75,6 @@ func (server *DatabaseServer) ListenAndServe(port string) error {
         w.Write(openApiBytes)
     })
 
-    /*
-    r.PathPrefix("/").Handler(grpcMux)
-    grpcMux.HandlePath("GET", "/", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
-        w.Header().Add("Content Type", "text/html")
-        switch r.Method {
-            case "GET": {
-                server.logger.Debugf("Requested static data from %s", staticDirPath)
-                if r.URL.Path == "" || r.URL.Path == "/" {
-                    http.ServeFile(w, r, path.Join(staticDirPath, "index.html"))
-                } else {
-                    http.ServeFile(w, r, path.Join(staticDirPath, r.URL.Path))
-                }
-            }
-        }
-    })
-    */
     r.PathPrefix("/").Handler(http.FileServer(http.Dir(staticDirPath)))
     
     httpServer := http.Server{
@@ -181,8 +165,9 @@ func (server *DatabaseServer) SaveDatabase(ctx context.Context, in *proto.SaveDa
 
     for _, db := range server.databases {
         if db.GetName() == in.DatabaseName {
-            if err := db.Save(in.Directory); err != nil {
-                err := fmt.Errorf("Error while save database %s to disk %s/%s",  in.DatabaseName, in.Directory, in.DatabaseName)
+            directory := server.backendDir + "/" + in.Directory
+            if err := db.Save(directory); err != nil {
+                err := fmt.Errorf("Error while save database %s to disk %s/%s",  in.DatabaseName, directory, in.DatabaseName)
                 logger.Error(err)
                 return &emptypb.Empty{}, err
             }
@@ -274,6 +259,52 @@ func (server *DatabaseServer) AppendColumn(ctx context.Context, in *proto.Append
     err := fmt.Errorf("Database %s does not exist", in.TableIdentifier.DatabaseName)
     logger.Error(err)
     return &emptypb.Empty{}, err
+}
+
+
+func (server *DatabaseServer) DeleteRow(ctx context.Context, in *proto.DeleteRowRequest) (*emptypb.Empty, error) {
+    logger := getContextLogger(ctx, server.logger)
+    logger.Infof("DeleteRow request: %+v", in)
+
+    for _, db := range server.databases {
+        if db.GetName() == in.TableIdentifier.DatabaseName {
+            table, err := db.GetTable(in.TableIdentifier.TableName)
+            if err != nil {
+                err = fmt.Errorf("Error while try to get table %s from database %s. Error: %v", in.TableIdentifier.TableName, in.TableIdentifier.DatabaseName, err)
+                logger.Error(err)
+                return &emptypb.Empty{}, err
+            }
+            err = table.DeleteRow(int(in.Id))
+            return &emptypb.Empty{}, err
+        }
+    }
+    
+    err := fmt.Errorf("Database %s does not exist", in.TableIdentifier.DatabaseName)
+    logger.Error(err)
+    return &emptypb.Empty{}, err
+}
+func (server *DatabaseServer) DeleteColumn(ctx context.Context, in *proto.DeleteColumnRequest) (*emptypb.Empty, error) {
+    logger := getContextLogger(ctx, server.logger)
+    logger.Infof("DeleteColumn request: %+v", in)
+
+    for _, db := range server.databases {
+        if db.GetName() == in.TableIdentifier.DatabaseName {
+            table, err := db.GetTable(in.TableIdentifier.TableName)
+            if err != nil {
+                err = fmt.Errorf("Error while try to get table %s from database %s. Error: %v", in.TableIdentifier.TableName, in.TableIdentifier.DatabaseName, err)
+                logger.Error(err)
+                return &emptypb.Empty{}, err
+            }
+            err = table.DeleteColumn(int(in.Id))
+            return &emptypb.Empty{}, err
+        }
+    }
+    
+    err := fmt.Errorf("Database %s does not exist", in.TableIdentifier.DatabaseName)
+    logger.Error(err)
+    return &emptypb.Empty{}, err
+
+
 }
 
 func (server *DatabaseServer) ChangeData(ctx context.Context, in *proto.ChangeDataRequest) (*emptypb.Empty, error) {

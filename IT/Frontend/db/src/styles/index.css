@@ -45,6 +45,7 @@ div#table {
 
 
 div#table-container {
+    min-height: 2em;
     border-radius: 20px;
     background-color: #e9edc9;
     -webkit-box-shadow: 0px 3px 5px 0px rgba(142,149,121,1);
@@ -61,6 +62,13 @@ div#add-database-tabpanel {
 }
 
 div#add-table-dialog {
+    min-height: 14em;
+    background-color: #e9edc9;
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+}
+
+div#change-data-dialog {
     min-height: 14em;
     background-color: #e9edc9;
     padding-left: 1.5em;

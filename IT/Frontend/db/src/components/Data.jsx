@@ -1,13 +1,11 @@
-import { IconButton, Typography, useTheme } from "@mui/material";
+import { Button, Typography, useTheme } from "@mui/material";
 import { Box } from "@mui/system"
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
-import { useOperation, OpenAPIContext } from 'react-openapi-client';
-import { useContext } from "react";
+import { useState } from "react";
+import { ChangeDataDialog } from "./dialogs/ChangeData";
 
 
 const GetColumnFromRows = (rows, columnIdx) => {
     let result = []
-    console.log(rows)
     for (let row of rows) {
         for (let i = 0; i < row.data.length; i++) {
             if ( i === columnIdx ) {
@@ -48,11 +46,23 @@ const dataToStr = (data) => {
 }
 
 export const Data = (props) => {
+    const [changeDataDialogOpen, setChangeDataDialogOpen] = useState(false);
+    const handleChangeDataDialogClose = () => {
+        setChangeDataDialogOpen(false);
+    }
+    const handleChangeDataClick = () => {
+        setChangeDataDialogOpen(true);
+    }
+
+    const dataType = dataToStr(props.data);
     return (
         <Box sx={{
             textAlign: "center",
         }}>
-            {dataToStr(props.data)}
+            <Button variant="text" color="secondary" onClick={handleChangeDataClick}>
+                {dataType}
+            </Button>
+            <ChangeDataDialog open={changeDataDialogOpen} onClose={handleChangeDataDialogClose} columnType={props.columnType} />
         </Box> 
     );
 };
@@ -61,30 +71,12 @@ export const DataPreview = (props) => {
 
     const theme = useTheme()
     return (
-        <Box id="data-preview">
-            <Box sx={{
-                display: "flex",
-                padding: 0,
-                margin: 0,
-            }}>
-                <Box sx={{
-                    flex: 1,
-                    textAlign: 'left',
-                    margin: 'auto',
-                }}>
-                    <Typography>{"(" + props.columnType + ")"}</Typography>
-                </Box>
-                <Box sx={{
-                    flex: 1,
-                    textAlign: 'center',
-                    margin: 0,
-                    padding: 0,
-                }}>
-                    <IconButton>
-                        <HighlightOffIcon color="primary" fontSize="medium"/>
-                    </IconButton>
-                </Box>
-            </Box>
+        <Box sx={{
+            flex: 1,
+            textAlign: 'left',
+            margin: 'auto',
+        }}>
+            <Typography>{"(" + props.columnType + ")"}</Typography>
         </Box>
     );
 };

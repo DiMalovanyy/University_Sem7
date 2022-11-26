@@ -65,7 +65,7 @@ export const AddDatabaseDialog = (props) => {
             setNewDatabaseName("");
             setNewDatabaseButtonClicked(false);
         }
-    }, [responseNewDbCall])
+    }, [responseNewDbCall, newDatabaseButtonClicked])
 
     const [loadDatabaseName, setLoadDatabaseName] = useState("");
     const [loadDatabaseDir, setLoadDatabaseDir] = useState("");
@@ -96,7 +96,7 @@ export const AddDatabaseDialog = (props) => {
             setLoadDatabaseDir("");
             setLoadDatabaseName("");
         }
-    }, [responseLoadDbCall])
+    }, [responseLoadDbCall, loadDatabaseButtonClicked])
 
     return (
         <Dialog onClose={handleClose} open={open}>

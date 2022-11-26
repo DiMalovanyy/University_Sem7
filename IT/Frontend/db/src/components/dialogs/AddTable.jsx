@@ -39,13 +39,13 @@ export const AddTableDialog = (props) => {
             !addTableResponse.error && 
             !addTableResponse.loading && 
             addTableResponse.data &&
-            tableName != "" && 
+            tableName !== "" && 
             addTableButtonClicked) {
                 onNewTableAdd(addTableResponse.data);
-                setAddTableButtonClicked(false);
                 setTableName("");
+                setAddTableButtonClicked(false);
         }
-    }, [addTableResponse]);
+    }, [addTableResponse, addTableButtonClicked]);
 
     return (
         <Dialog onClose={handleClose} open={open}>

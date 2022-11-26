@@ -75,7 +75,6 @@ const Header = (props) => {
         setAddDatabaseDialogOpen(false);
     }  
 
-
     const [newDatabaseName, setNewDatabaseName] = useState("");
     const [databaseList, setDatabaseList] = useState([]);
 

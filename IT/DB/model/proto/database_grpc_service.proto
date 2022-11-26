@@ -29,7 +29,6 @@ service DatabaseService {
         };
     }
 
-
     rpc GetTable(GetTableRequest) returns (Table) {
         option (google.api.http) = {
             get: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}"
@@ -49,6 +48,16 @@ service DatabaseService {
     rpc AppendColumn(AppendColumnRequest) returns (google.protobuf.Empty) {
         option (google.api.http) = {
             put: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}/column"
+        };
+    }
+    rpc DeleteRow(DeleteRowRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}/row/{id}"
+        };
+    }
+    rpc DeleteColumn(DeleteColumnRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v1/api/database/{tableIdentifier.databaseName}/table/{tableIdentifier.tableName}/column/{id}"
         };
     }
 
@@ -111,4 +120,14 @@ message TableData {
 message ChangeDataRequest {
     TableIdentifier tableIdentifier = 1;
     TableData tableData = 2;
+}
+
+message DeleteRowRequest {
+    TableIdentifier tableIdentifier = 1;
+    int64 id = 2;
+}
+
+message DeleteColumnRequest {
+    TableIdentifier tableIdentifier = 1;
+    int64 id = 2;
 }

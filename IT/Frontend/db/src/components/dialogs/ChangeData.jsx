@@ -12,7 +12,7 @@ export const ChangeDataDialog = (props) => {
         <Dialog onClose={handleClose} open={open}>
             <Box id="change-data-dialog">
             <DialogTitle>
-                TODO
+                {props.columnType}
             </DialogTitle>
             </Box>
         </Dialog>

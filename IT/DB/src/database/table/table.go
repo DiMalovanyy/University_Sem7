@@ -62,6 +62,20 @@ func (t *Table) AppendRow() int {
     return newRowIdx
 }
 
+func (t *Table) DeleteRow(rowIndex int) error {
+    if rowIndex >= len(*t.rows) {
+        err := fmt.Errorf("Index %d out of range", rowIndex)
+        t.logger.Error(err)
+        return err
+    }
+    (*t.rows) = append((*(t.rows))[:rowIndex], (*(t.rows))[rowIndex + 1:]...)
+
+    for columnIdx  := range t.columns {
+        *(t.columns[columnIdx].Data) = append((*(t.columns[columnIdx].Data))[:rowIndex], (*(t.columns[columnIdx].Data))[rowIndex+ 1:]...)
+    }
+    return nil;
+}
+
 func (t *Table) AppendColumn() int {
     newColumIdx := t.columnsAmount 
     columnData := make([]*proto.Data, t.rowsAmount) 
@@ -79,6 +93,20 @@ func (t *Table) AppendColumn() int {
     t.columnsAmount++
     t.logger.Debugf("New Empty Column with index %d appended to database", newColumIdx)
     return newColumIdx
+}
+
+func (t *Table) DeleteColumn(columnIndex int) error {
+
+    if columnIndex >= len(t.columns) {
+        err := fmt.Errorf("Index %d out of range", columnIndex)
+        t.logger.Error(err)
+        return err
+    }
+    for rowIdx := range *(t.rows) {
+        (*(t.rows))[rowIdx].Data = append((*(t.rows))[rowIdx].Data[:columnIndex], (*(t.rows))[rowIdx].Data[columnIndex + 1:]...)
+    }
+    t.columns = append(t.columns[:columnIndex], t.columns[columnIndex + 1:]...)
+    return nil;
 }
 
 func (t *Table) SetData(rowIdx int, columnIdx int, data *proto.Data) error{
@@ -174,6 +202,8 @@ func (t Table) Dump(writer io.Writer) error {
     }
 
     tableOut.Render()
+
+    t.DumpByColumns(writer)
     return nil
 }
 

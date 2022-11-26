@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DatabaseTable from "./Table";
 import { AddTableDialog } from "./dialogs/AddTable";
-
+import { useOperationMethod } from 'react-openapi-client';
 
 const Database = (props) => {
     const theme = useTheme()
@@ -39,9 +39,31 @@ const Database = (props) => {
 
 
     const handleNewTableAdd = (newTableData) => {
-        console.log(newTableData);
         setTables((prev) => [...prev, newTableData]);
     }
+
+
+    const [getTableCall, getTableResponse] = useOperationMethod('DatabaseService_GetTable');
+    const [needTableUpdate, setNeedTableUpdate] = useState(false);
+    const handleTableUpdate = (tableName) => {
+        getTableCall([
+            {name: 'databaseName', value: props.database.name, in: "path"},
+            {name: 'tableName', value: tableName, in: "path"},
+        ]);
+        setNeedTableUpdate(true);
+    }
+    useEffect(() => {   
+        if (getTableResponse.data && !getTableResponse.error && !getTableResponse.loading && needTableUpdate) {
+            setTables((prev) => prev.map( (table) => {
+                if (table.name === getTableResponse.data.name) {
+                    return getTableResponse.data
+                } else {
+                    return table;
+                }
+            }));
+            setNeedTableUpdate(false);
+        }
+    }, [getTableResponse.data, getTableResponse.error, getTableResponse.loading, tables, needTableUpdate]);
 
     if (!props.database.hasOwnProperty('tables')) {
         return <Box />
@@ -88,9 +110,17 @@ const Database = (props) => {
             <Box sx={{
                 flex: 20,
             }}>
-                <DatabaseTable table={tables[tableTab]} />
+                <DatabaseTable 
+                    table={tables[tableTab]} 
+                    databaseName={props.database.name}     
+                    onTableUpdate={handleTableUpdate} />
             </Box>
-            <AddTableDialog open={addTableDialogOpen} onNewTableAdd={handleNewTableAdd} onClose={handleAddTableDialogClose} databaseName={props.database.name} />
+            <AddTableDialog 
+                open={addTableDialogOpen} 
+                onNewTableAdd={handleNewTableAdd}
+                onClose={handleAddTableDialogClose} 
+                databaseName={props.database.name} 
+            />
         </Box> 
     );
 
