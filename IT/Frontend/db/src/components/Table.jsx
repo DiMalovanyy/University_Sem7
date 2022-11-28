@@ -57,6 +57,26 @@ const DatabaseTable = (props) => {
        ])
     }
 
+    const [changeDataCall, changeDataResponse] = useOperationMethod('DatabaseService_ChangeData');
+    const handleDataChanged = (newData, columnIdx, rowIdx) => {
+        const tableData = {
+            'rowIndex': rowIdx,
+            'columnIndex': columnIdx,
+            'newData': newData,
+        };
+        console.log(tableData);
+        changeDataCall([
+            {name: 'databaseName', value: props.databaseName, in: "path"},
+            {name: 'tableName', value: table.name, in: "path"},
+        ], tableData);
+    }
+
+    useEffect(() => {
+        if (changeDataResponse.data && !changeDataResponse.error && !changeDataResponse.loading) {
+            props.onTableUpdate(table.name);
+        }
+    }, [changeDataResponse.data, changeDataResponse.error, changeDataResponse.loading]);
+
     useEffect(() => {
         if (addColumnResponse.data && !addColumnResponse.error && !addColumnResponse.loading) {
             props.onTableUpdate(table.name)
@@ -138,7 +158,13 @@ const DatabaseTable = (props) => {
                                         </IconButton>
                                     </TableCell>
                                     {rowVal.data.map((dataVal, dataIdx) => (
-                                        <TableCell ><Data data={dataVal} columnType={GetColumnType(table.rows, dataIdx)}/></TableCell>
+                                        <TableCell >
+                                            <Data 
+                                                data={dataVal} 
+                                                columnType={GetColumnType(table.rows, dataIdx)}
+                                                onDataChanged={(newData) => { handleDataChanged(newData, dataIdx, rowIdx)}}
+                                            />
+                                            </TableCell>
                                     ))}
                                 </TableRow>
                             ))}

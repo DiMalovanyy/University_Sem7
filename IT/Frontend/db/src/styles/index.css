@@ -69,8 +69,12 @@ div#add-table-dialog {
 }
 
 div#change-data-dialog {
-    min-height: 14em;
+    min-height: 20em;
     background-color: #e9edc9;
     padding-left: 1.5em;
     padding-right: 1.5em;
+}
+
+div#data-input-box {
+    padding: 1em;
 }

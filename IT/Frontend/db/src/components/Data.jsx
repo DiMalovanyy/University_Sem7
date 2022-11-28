@@ -53,6 +53,10 @@ export const Data = (props) => {
     const handleChangeDataClick = () => {
         setChangeDataDialogOpen(true);
     }
+    
+    const handleDataChanged = (newData) => {
+        props.onDataChanged(newData);
+    };
 
     const dataType = dataToStr(props.data);
     return (
@@ -62,7 +66,11 @@ export const Data = (props) => {
             <Button variant="text" color="secondary" onClick={handleChangeDataClick}>
                 {dataType}
             </Button>
-            <ChangeDataDialog open={changeDataDialogOpen} onClose={handleChangeDataDialogClose} columnType={props.columnType} />
+            <ChangeDataDialog 
+                open={changeDataDialogOpen} 
+                onClose={handleChangeDataDialogClose} 
+                onDataChanged={handleDataChanged} 
+                columnType={props.columnType} />
         </Box> 
     );
 };
