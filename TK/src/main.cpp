@@ -12,7 +12,7 @@ void ConfigureLoggingEnviroment() {
 int main(int argc, char** argv) {
     ConfigureLoggingEnviroment();
 
-    NumSpeaker speaker;
+    tk::NumSpeaker speaker;
     speaker.Speak(1);
     return 0;
 }

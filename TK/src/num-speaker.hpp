@@ -4,7 +4,8 @@
 #include <boost/noncopyable.hpp>
 #include <spdlog/logger.h>
 
-#include "audio_player.h"
+
+#include "audio-player.hpp"
 
 namespace tk {
 class NumSpeaker final: public boost::noncopyable {
@@ -14,7 +15,7 @@ public:
     void Speak(int num);
 private:
     std::shared_ptr<spdlog::logger> logger_;
-    AudioPlayer audio_player_;
+    AudioPlayer player_;
 };
 }; // namespace tk
 
