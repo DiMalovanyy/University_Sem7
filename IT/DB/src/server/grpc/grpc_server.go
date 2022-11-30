@@ -9,6 +9,7 @@ import (
 
 	proto "github.com/DiMalovanyy/University_Sem7/IT/DB/genproto"
 	"github.com/DiMalovanyy/University_Sem7/IT/DB/src/database"
+	"github.com/DiMalovanyy/University_Sem7/IT/DB/src/database/table"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
@@ -332,4 +333,51 @@ func (server *DatabaseServer) ChangeData(ctx context.Context, in *proto.ChangeDa
     err := fmt.Errorf("Database %s does not exist", in.TableIdentifier.DatabaseName)
     logger.Error(err)
     return &emptypb.Empty{}, err
+}
+
+func (server *DatabaseServer) TableDiff(ctx context.Context, in *proto.TableDiffRequest) (*proto.Table, error) {
+    logger := getContextLogger(ctx, server.logger)
+    logger.Infof("TableDiff request: %+v", in)
+
+    
+    var firstDb, secondDb *database.Database
+    var firstTable, secondTable *table.Table
+
+    // Verify input data
+    for _, db := range server.databases {
+        if db.GetName() == in.FirstTable.DatabaseName {
+            firstDb = db
+            var err error
+            firstTable, err = firstDb.GetTable(in.FirstTable.TableName)
+            if err != nil {
+                err = fmt.Errorf("Error while try to get table %s from database %s. Error: %v", in.FirstTable.TableName, in.FirstTable.DatabaseName, err)
+                logger.Error(err)
+                return nil, err
+            }
+        }
+
+        if db.GetName() == in.SecondTable.DatabaseName {
+            secondDb = db
+            var err error
+            secondTable, err = secondDb.GetTable(in.SecondTable.TableName)
+            if err != nil {
+                err = fmt.Errorf("Error while try to get table %s from database %s. Error: %v", in.SecondTable.TableName, in.SecondTable.DatabaseName, err)
+                logger.Error(err)
+                return nil, err
+            }
+        }
+    }
+
+    if firstTable == nil || firstDb == nil {
+        err := fmt.Errorf("First Table %s or database %s does not found", in.FirstTable.TableName, in.FirstTable.DatabaseName);
+        logger.Error(err);
+        return nil, err
+    }
+    if secondTable == nil || secondDb == nil {
+        err := fmt.Errorf("Second Table %s or database %s does not found", in.SecondTable.TableName, in.SecondTable.DatabaseName);
+        logger.Error(err);
+        return nil, err
+    }
+
+    return firstTable.Diff(secondTable) 
 }

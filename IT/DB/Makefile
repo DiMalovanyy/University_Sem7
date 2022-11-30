@@ -1,5 +1,5 @@
 run: build
-	@./bin/db_exe
+	@./bin/db_exe --dir .
 
 build: genproto
 	go build -o ./bin/db_exe ./src

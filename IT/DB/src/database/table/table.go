@@ -21,7 +21,7 @@ type Table struct {
     rowsAmount int
     columnsAmount int
 
-    rows *[]*proto.Row
+    Rows *[]*proto.Row
     columns []column
     logger *logrus.Entry
 }
@@ -29,16 +29,23 @@ type Table struct {
 func GetTable(table *proto.Table, baseLogger *logrus.Entry) (*Table, error) {
     logger := baseLogger.WithFields(logrus.Fields{"table": table.Name})
 
-    rows := &table.Rows
-    columns := getColumnsFromRows(*rows)
+    Rows := &table.Rows
+    columns := getColumnsFromRows(*Rows)
     return &Table{
         name: table.Name,
-        rowsAmount: len(*rows),
+        rowsAmount: len(*Rows),
         columnsAmount: len(columns),
-        rows: rows,
+        Rows: Rows,
         columns: columns,
         logger: logger,
     }, nil
+}
+
+func (t Table) ToModel() *proto.Table {
+    return &proto.Table{
+        Name: t.name,
+        Rows: *t.Rows,
+    }
 }
 
 func (t *Table) AppendRow() int {
@@ -51,7 +58,7 @@ func (t *Table) AppendRow() int {
     row := &proto.Row {
         Data: rowData,
     }
-    (*t.rows) = append(*(t.rows), row)
+    (*t.Rows) = append(*(t.Rows), row)
 
     for columnIdx := range t.columns {
         *(t.columns[columnIdx].Data) = append(*(t.columns[columnIdx].Data), rowData[columnIdx])
@@ -63,12 +70,12 @@ func (t *Table) AppendRow() int {
 }
 
 func (t *Table) DeleteRow(rowIndex int) error {
-    if rowIndex >= len(*t.rows) {
+    if rowIndex >= len(*t.Rows) {
         err := fmt.Errorf("Index %d out of range", rowIndex)
         t.logger.Error(err)
         return err
     }
-    (*t.rows) = append((*(t.rows))[:rowIndex], (*(t.rows))[rowIndex + 1:]...)
+    (*t.Rows) = append((*(t.Rows))[:rowIndex], (*(t.Rows))[rowIndex + 1:]...)
 
     for columnIdx  := range t.columns {
         *(t.columns[columnIdx].Data) = append((*(t.columns[columnIdx].Data))[:rowIndex], (*(t.columns[columnIdx].Data))[rowIndex+ 1:]...)
@@ -80,12 +87,12 @@ func (t *Table) AppendColumn() int {
     newColumIdx := t.columnsAmount 
     columnData := make([]*proto.Data, t.rowsAmount) 
 
-    for rowIdx := range *(t.rows) {
+    for rowIdx := range *(t.Rows) {
         // Create Data at the end of each row (at newColumIdx)
-        (*(t.rows))[rowIdx].Data = append((*(t.rows))[rowIdx].Data, &proto.Data{
+        (*(t.Rows))[rowIdx].Data = append((*(t.Rows))[rowIdx].Data, &proto.Data{
             Data: &proto.Data_EmptyData{},
         })
-        columnData[rowIdx] = (*(t.rows))[rowIdx].Data[newColumIdx]
+        columnData[rowIdx] = (*(t.Rows))[rowIdx].Data[newColumIdx]
     }
     t.columns = append(t.columns, column{
         Data: &columnData,
@@ -102,8 +109,8 @@ func (t *Table) DeleteColumn(columnIndex int) error {
         t.logger.Error(err)
         return err
     }
-    for rowIdx := range *(t.rows) {
-        (*(t.rows))[rowIdx].Data = append((*(t.rows))[rowIdx].Data[:columnIndex], (*(t.rows))[rowIdx].Data[columnIndex + 1:]...)
+    for rowIdx := range *(t.Rows) {
+        (*(t.Rows))[rowIdx].Data = append((*(t.Rows))[rowIdx].Data[:columnIndex], (*(t.Rows))[rowIdx].Data[columnIndex + 1:]...)
     }
     t.columns = append(t.columns[:columnIndex], t.columns[columnIndex + 1:]...)
     return nil;
@@ -133,19 +140,19 @@ func (t *Table) SetData(rowIdx int, columnIdx int, data *proto.Data) error{
     }
 
     t.columns[columnIdx].TypeStr = getDataStringType(data)
-    (*(t.rows))[rowIdx].Data[columnIdx].Data = data.Data
+    (*(t.Rows))[rowIdx].Data[columnIdx].Data = data.Data
     
     t.logger.Infof("Value %v set to {%d, %d}", data, rowIdx, columnIdx)
     return nil
 }
 
 func (t Table) Validate() error {
-    if t.rows == nil || len(*t.rows) == 0 {
-        err := fmt.Errorf("Table does not contains rows")
+    if t.Rows == nil || len(*t.Rows) == 0 {
+        err := fmt.Errorf("Table does not contains Rows")
         t.logger.Error(err)
         return err
     }
-    for rowIndex, row := range *t.rows {
+    for rowIndex, row := range *t.Rows {
         if len(row.Data) != t.columnsAmount {
             err := fmt.Errorf("The Row with index %d columns amount not equal to table defined: %d != %d", rowIndex, len(row.Data), t.columnsAmount)
             t.logger.Error(err)
@@ -174,6 +181,53 @@ func (t Table) Validate() error {
     return nil
 }
 
+func (t Table) Diff(another *Table) (*proto.Table, error) {
+    if t.rowsAmount != another.rowsAmount {
+        err := fmt.Errorf("Tables rows amount should be equal. %d != %d", t.rowsAmount, another.columnsAmount)
+        return nil, err
+    }
+
+    result := &proto.Table{
+        Name: "Diff",
+        Rows: make([]*proto.Row, 0 ),
+    }
+    for i := 0; i < t.rowsAmount; i++ {
+        result.Rows = append(result.Rows, &proto.Row{
+            Data: make([]*proto.Data, 0),
+        })
+    }
+
+    for columnIdx, column := range t.columns {
+        if columnIdx >= another.columnsAmount {
+            for dataIdx, data := range *column.Data {
+                result.Rows[dataIdx].Data = append(result.Rows[dataIdx].Data, data)
+            }
+        } else {
+            /*
+            isColumnsEqual := true
+            Inner:
+            for dataIdx := range *column.Data {
+                firstData := (*column.Data)[dataIdx].Data
+                secondData := (*(another.columns[columnIdx].Data))[dataIdx].Data
+
+                if firstData != secondData {
+                    t.logger.Debugf("%v != %v", firstData, secondData)
+                    isColumnsEqual = false
+                    break Inner
+                }
+            }
+            if !isColumnsEqual {
+                for dataIdx, data := range *column.Data {
+                    result.Rows[dataIdx].Data = append(result.Rows[dataIdx].Data, data)
+                }
+            }
+            */
+        }
+    }
+
+    return result, nil
+}
+
 
 func (t Table) Dump(writer io.Writer) error {
     if err := t.Validate(); err != nil {
@@ -193,7 +247,7 @@ func (t Table) Dump(writer io.Writer) error {
 
     tableOut.AppendHeader(tableHeader)
 
-    for rowIdx, row := range *(t.rows) {
+    for rowIdx, row := range *(t.Rows) {
         rowLine := []interface{}{rowIdx}
         for _, data := range row.Data {
             rowLine = append(rowLine, data)

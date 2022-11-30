@@ -68,6 +68,13 @@ service DatabaseService {
             body: "tableData"
         };
     }
+
+    rpc TableDiff(TableDiffRequest) returns (Table) {
+        option (google.api.http) = {
+            put: "/v1/api/diff"
+            body: "*"
+        };
+    }
 }
 
 message GetDatabaseListResponse {
@@ -130,4 +137,9 @@ message DeleteRowRequest {
 message DeleteColumnRequest {
     TableIdentifier tableIdentifier = 1;
     int64 id = 2;
+}
+
+message TableDiffRequest {
+    TableIdentifier firstTable = 1;
+    TableIdentifier secondTable = 2;
 }

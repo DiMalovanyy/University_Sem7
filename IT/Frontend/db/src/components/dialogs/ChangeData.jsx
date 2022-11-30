@@ -81,13 +81,32 @@ const PictureData = (props) => {
     useEffect(() => {
         props.onDataChanged({});
     }, []);
+
+    const [pictureNameData, setPictureNameData] = useState("");
+    const [pictureFormatData, setPictureFormatData] = useState("");
+    const handlePictureNameDataChanged = (event) => {
+        setPictureNameData(event.target.value);
+        props.onDataChanged({"pictureData": {
+            "pictureName": event.target.value,
+            "pictureFormat": pictureFormatData,
+        } });
+    }
+    const handlePictureFormatDataChanged = (event) => {
+        setPictureFormatData(event.target.value);
+        props.onDataChanged({"pictureData": {
+            "pictureName": pictureNameData,
+            "pictureFormat": event.target.value,
+        }
+    });
+    }
+
     return (
         <Box>
             <Box id="data-input-box">
-                <TextField label="Picture Name" variant="outlined" />
+                <TextField label="Picture Name" value={pictureNameData} onChange={handlePictureNameDataChanged} variant="outlined" />
             </Box>
             <Box id="data-input-box">
-                <TextField label="Picture Format" variant="outlined" />
+                <TextField label="Picture Format" value={pictureFormatData} onChange={handlePictureFormatDataChanged} variant="outlined" />
             </Box>
         </Box>
     )
@@ -97,13 +116,34 @@ const IntervalData = (props) => {
     useEffect(() => {
         props.onDataChanged({});
     }, []);
+
+    const [intervalDataFrom, setIntervalDataFrom] = useState(0);
+    const [intervalDataTo, setIntervalDataTo] = useState(0);
+
+    const handleIntervalDataFromChanged = (event) => {
+        setIntervalDataFrom(event.target.value);
+        props.onDataChanged({"intervalData": {
+            "fromVal": event.target.value,
+            "toVal": intervalDataTo,
+        }})
+    }
+
+    const handleIntervalDataToChanged = (event) => {
+        setIntervalDataTo(event.target.value);
+        props.onDataChanged({"intervalData": {
+            "fromVal": intervalDataFrom,
+            "toVal":  event.target.value,
+        }})
+
+    }
+
     return (
         <Box>
             <Box id="data-input-box">
-                <TextField label="From" variant="outlined" />
+                <TextField label="From" variant="outlined" value={intervalDataFrom} onChange={handleIntervalDataFromChanged}/>
             </Box>
             <Box id="data-input-box">
-                <TextField label="To" variant="outlined" />
+                <TextField label="To" variant="outlined" value={intervalDataTo} onChange={handleIntervalDataToChanged}/>
             </Box>
         </Box>
     )
@@ -148,7 +188,7 @@ const Data = (props) => {
         case 'floatData': return <FloatData onDataChanged={props.onDataChanged}/>
         case 'stringData': return <StringData onDataChanged={props.onDataChanged}/>
         case 'pictureData': return <PictureData onDataChanged={props.onDataChanged}/>
-        case 'IntervalData': return <IntervalData onDataChanged={props.onDataChanged}/>
+        case 'intervalData': return <IntervalData onDataChanged={props.onDataChanged}/>
         default: <Box> Undefined DataType </Box>
     }
 }
