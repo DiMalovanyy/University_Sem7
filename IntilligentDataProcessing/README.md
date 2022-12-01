@@ -1,10 +1,9 @@
 # Intilligent Data Processing
 
-
 ## Info
 - **Lecturer:** Пашко Анатолій Олексійович
 - **Practice:** Пашко Анатолій Олексійович
-- **Variant:** 7
+- **Variant:** 27
 
 ## Todo list
 
@@ -15,4 +14,4 @@
 
 ## Resources
 - [Зразок звіту](https://t.me/importanttk/64)
-- [Файли](https://t.me/importanttk/66)
+- [Файли(Варіанти)](https://t.me/importanttk/66)

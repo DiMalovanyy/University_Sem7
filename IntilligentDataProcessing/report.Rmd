@@ -1,0 +1,426 @@
+---
+title: "Інтелектуальна обробка данних"
+author: "Дмитро Мальований ТК-42 (Данні А27)"
+date: "2022-12-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, echo = TRUE)
+```
+
+```{r includes, include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(magrittr)
+library(psych)
+library(moments)
+library(outliers)
+library(stats)
+```
+
+## Завантажженя данних
+```{r data}
+Data <- read.table("A27.txt", nrows = 5000, header=FALSE, sep=",", as.is=FALSE)
+len <- length(Data[,1])
+```
+
+#Завдання 1:Візуалізація даних
+### Зображення графіків по кожному з каналів
+```{r dataView, echo=FALSE}
+plot(Data$V1, type="l", main="1-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V2, type="l", main="2-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V3, type="l", main="3-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V4, type="l", main="4-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V5, type="l", main="5-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V6, type="l", main="6-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V7, type="l", main="7-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V8, type="l", main="8-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V9, type="l", main="9-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V10, type="l", main="10-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V11, type="l", main="11-ий канал", xlab = "", ylab = "", col="red")
+plot(Data$V12, type="l", main="12-ий канал", xlab = "", ylab = "", col="red")
+```
+
+#Завдання 1: Попередня обробка.
+### Середнє по всім каналам
+```{r dataMean, echo=FALSE}
+Data %>% summarise_each(funs(mean))
+```
+### Середнє гармонічне
+```{r dataHarmonicMean, echo=FALSE}
+Data %>% summarise_each(funs(harmonic.mean))
+```
+### Середнє геометричне
+```{r dataGeometricMean, echo=FALSE}
+Data %>% summarise_each(funs(geometric.mean))
+```
+### Дисперсія
+```{r dataVar, echo=FALSE}
+Data %>% summarise_each(funs(var))
+```
+### середня різниця Джинні
+```{r dataGiniDiff, echo=FALSE}
+GiniDifference <- function(values) {
+  diff_gini <- ((1 / (length(values) * (length(values) - 1))) * sum(values / 12))
+  return(diff_gini)
+}
+Data %>% summarise_each(funs(GiniDifference))
+```
+### Мода
+```{r dataMode, echo=FALSE}
+getmode <- function(value) {
+  uniqv <- unique(value)
+  uniqv[which.max(tabulate(match(value, uniqv)))]
+}
+Data %>% summarise_each(funs(getmode))
+```
+### Медіана
+```{r dataMedian, echo=FALSE}
+Data %>% summarise_each(funs(median))
+```
+### коефіцієнт асиметрії
+```{r dataSkewness, echo=FALSE}
+Data %>% summarise_each(funs(skewness))
+```
+### коефіцієнт ексцессу
+```{r dataKurtosis, echo=FALSE}
+Data %>% summarise_each(funs(kurtosis))
+```
+### Гістограми
+```{r dataHistograms, echo=FALSE}
+for(x in 1:12){
+  hist(Data[,x],
+       main = sprintf("Histogram of V$%s", x)
+       , col="red"
+       , xlab=""
+       , ylab="")
+}
+```
+### Перевірка гіпотези про нормальний закон розподілу
+```{r dataShapiroTest, echo=FALSE}
+for(x in 1:12){
+  channelData <- Data[,x]
+  cat(sprintf("%s-ий канал\n", x))
+  print(shapiro.test(channelData))
+  cat("\n")
+}
+```
+За Shapiro-Wilk тестом можно зрозуміти що розподіли не нормальні так як p-value менше 0.05
+
+### Виконуємо нормалізацію данних
+```{r dataNormalization, echo=FALSE}
+normalizedData <- scale(Data, center=TRUE, scale = TRUE)
+```
+Перевіряємо нормалізацію данних
+```{r normilizedDataCheck, echo=FALSE}
+for (x in 1:12) {
+  channelData <- normalizedData[,x]
+  cat(sprintf("%s-ий канал\n", x))
+  cat(sprintf("Математичне сподівання:\t\t\t%s\n",  mean(channelData)))
+  cat(sprintf("Дисперсія:             \t\t\t%s\n",  var(channelData)))
+  cat("\n")
+}
+```
+Можемо зробити висновок що математичне сподівання прямує до 0, а дисперсія до 1, тому данні можна вважати нормалізованими.
+### Графіки нормалізованих данних
+```{r normilizedDataPlots, echo=FALSE}
+for (x in 1:12) {
+  plot(normalizedData[,x], main = sprintf("%s-ий канал", x), type = "l", col="red", xlab="", ylab="")
+}
+```
+
+
+# Задання 2. Однофакторний дисперсійний аналіз
+Знаходимо дисперсії для кожного рівня
+```{r varsPerLevel, echo=FALSE}
+S <- c()
+newData <- c(Data[,1],Data[,2],Data[,3],Data[,4],Data[,5],Data[,6],Data[,7],Data[,8],Data[,9],Data[,10],Data[,11],Data[,12])
+for (x in 1:12) {
+  channelData <- Data[,x]
+  S[x] <- var(channelData)
+}
+```
+### Статистична перевірка однорідності за критерієм Кокрена
+```{r cochranCheck, echo=FALSE}
+cochran.test(S,rep(len,12)) 
+qcochran(0.005, len, 12)
+```
+Відхиляємо гіпотезу про однорідність дисперсій так як p-value дуже маленьке
+
+### Ящик з вусами
+```{r dataBoxPlot, echo=FALSE}
+group <- as.matrix(gl(12,len,len*12, labels=c("1","2","3","4","5","6","7","8","9","10","11","12")))
+
+boxplot(Data, xlab = "", ylab = "", main = "", col = "yellow")
+```
+
+### Підсумок
+```{r dataVarSumary, echo=FALSE}
+lm.D <- lm(Data) 
+summary(lm.D)
+anova(lm.D)
+```
+
+# Завдання 3 (Двофакторний дисперсійний аналіз)
+Побудуємо таблицю двохфакторного експерименту за правилом – кожен канал розбити на 5 частин (по 1000 даних у кожній частині).
+```{r task3DataPrepare, echo=FALSE}
+B1 <- matrix(nrow = 1000, ncol = 0)
+B2 <- matrix(nrow = 1000, ncol = 0)
+B3 <- matrix(nrow = 1000, ncol = 0)
+B4 <- matrix(nrow = 1000, ncol = 0)
+B5 <- matrix(nrow = 1000, ncol = 0)
+for(i in 1:12) {
+  B1 <- cbind(B1, Data[1:1000, i])
+  B2 <- cbind(B2, Data[1001:2000, i])
+  B3 <- cbind(B3, Data[2001:3000, i])
+  B4 <- cbind(B4, Data[3001:4000, i])
+  B5 <- cbind(B5, Data[4001:5000, i])
+}
+```
+знаходимо середнє значення в кожній x[ij] клітинці
+```{r task3DataPrepare2, echo=FALSE}
+x <- matrix(nrow=5, ncol=12)
+for (j in 1:12) {
+  x[1,j] = mean(B1[,j])
+  x[2,j] = mean(B2[,j])
+  x[3,j] = mean(B3[,j])
+  x[4,j] = mean(B4[,j])
+  x[5,j] = mean(B5[,j])
+}
+cat(sprintf("x:\t%s\n", x))
+```
+знаходимо суму по стовпчиках
+```{r task3DataPrepare3, echo=FALSE}
+X <- c()
+for(j in 1:12){
+  X[j] <- sum(x[,j])
+}
+cat(sprintf("X:\t%s\n", X))
+```
+знаходимо суму по рядках
+```{r task3DataPrepare4, echo=FALSE}
+X1 <- c()
+for(j in 1:5){
+  X1[j] <- sum(x[j,])
+}
+cat(sprintf("X':\t%s\n", X1))
+```
+Обчислюємо основні показники
+```{r task3DataPrepare5, echo=FALSE}
+Q1 <- 0
+for(i in 1:5){
+  for(j in 1:12){
+    Q1 <- Q1 + x[i,j]*x[i,j]
+  }
+}
+cat(sprintf("Q1:\t%s\n", Q1))
+
+Q2 <- 0
+for(i in 1:12){
+  Q2 <- Q2 + X[i]*X[i]
+}
+Q2 <- (1/5)*Q2
+cat(sprintf("Q2:\t%s\n", Q2))
+
+Q3 <- 0
+for(i in 1:5){
+  Q3 <- Q3 + X1[i]*X1[i]
+}
+Q3 <- (1/12)*Q3
+cat(sprintf("Q3:\t%s\n", Q3))
+
+Q4 <- 0
+for(i in 1:5){
+  Q4 <- Q4 + X1[i]
+}
+Q4 <- (1/60)*Q4*Q4
+cat(sprintf("Q4:\t%s\n", Q4))
+```
+
+### Оцінки дисперсій
+``` {r varEvaluation, echo=FALSE}
+
+S0_2 <- (Q1+Q4-Q2-Q3)/44
+cat(sprintf("S0^2:\t%s\n", S0_2))
+
+SA_2 <- (Q2 - Q4)/11
+cat(sprintf("SA^2:\t%s\n", SA_2))
+
+SB_2 <- (Q3 -Q4)/4
+cat(sprintf("SB^2:\t%s\n", SB_2))
+
+cat(sprintf("Фактор А: SA^2/S0^2:\t%s\n", SA_2/S0_2))
+cat(sprintf("\tFa(11,44):\t%s\n", df(0.05,11,44)))
+
+
+cat(sprintf("Фактор B: SB^2/S0^2:\t%s\n", SB_2/S0_2))
+cat(sprintf("\tFa(4,44) :\t%s\n", df(0.05,4,44)))
+```
+# Завдання 4 (Перетворення Фурʼє)
+```{r iverseFurier, echo=FALSE}
+for(x in 1:12) {
+  Fourier <- fft(Data[,x]);
+  InversFourier <- fft(Fourier, inverse=TRUE)
+  spectrum(Fourier, type="l", col="red", main=sprintf("%s канал (перетворення
+  Фурʼє)\n", x), xlab="", ylab="")
+  spectrum(InversFourier, type="l", col="red", main=sprintf("%s канал (обернене перетворення
+  Фурʼє)\n", x), xlab="", ylab="")
+}
+```
+
+# Завдання 5 (Кореляційний аналіз)
+
+
+## Матриця кореляцій
+```{r corMatrix, echo=FALSE}
+corData <- cor(Data)
+corData
+```
+### Обираємо канали:
+Якщо подивитись на кореляційну матрицю можно побачити сильну кореляцію між каналами (1,11,12). Мінімальна кореляція по модулю серед каналів це кореляція між каналами 1 та 11 = 0.9740521
+```{r corChanelsTake, echo=FALSE}
+a <- Data[,1]
+b <- Data[,11]
+c <- Data[,12]
+```
+Знаходима коєфіцієнти
+```{r pearsonCorKoef, echo=FALSE}
+rab <- cor(a, b, method = "pearson")
+rac <- cor(a, c, method = "pearson")
+rbc <- cor(b, c, method = "pearson")
+rab
+rac
+rbc
+```
+Часткові коєфіцієнти
+```{r partialKoefs, echo=FALSE}
+#а, b без c
+rab_c <- ((rab-rac*rbc)/sqrt((1-rac)*(1-rbc)))
+rab_c
+#а, c без b
+rac_b <- ((rac-rab*rbc)/sqrt((1-rab)*(1-rbc)))
+rac_b
+#b, c без a
+rbc_a <- ((rbc-rab*rac)/sqrt((1-rab)*(1-rac)))
+rbc_a
+```
+множинний коеф. кореляції для a, двофактор. з b, c
+```{r multipleKoef1, echo=FALSE}
+ra_bc <- sqrt((rab * rab + rac * rac - 2 * rab * rac * rbc) / (1 - rbc * rbc))
+ra_bc
+```
+множинний коеф. кореляції для b, лін. двофактор. з a, c
+```{r multipleKoef2, echo=FALSE}
+rb_ac <- sqrt((rab * rab + rbc * rbc - 2 * rab * rbc * rac) / (1 - rac * rac))
+rb_ac
+```
+множинний коеф. кореляції для c, лін. двофактор. з a, b
+```{r multipleKoef3, echo=FALSE}
+rc_ab <- sqrt((rac * rac + rbc * rbc - 2 * rac * rbc * rab) / (1 - rab * rab))
+rc_ab
+```
+
+# Завдання 6 (Факторний аналіз)
+
+### знаходимо власні числа кореляційної матриці
+```{r EigenValues, echo=FALSE}
+EigenValues <- eigen(corData, only.values = TRUE)
+EigenValues
+print(sum(EigenValues$values))
+```
+### камʼянистий осип
+```{r EigenValuesPlot, echo=FALSE}
+plot(EigenValues$values, main = "Камʼянистий осип", type="b", col="red"
+     , xlab="Частка дисперсії"
+     , ylab="Власні значення")
+```
+### матриця власних векторів
+```{r EigenVectors, echo=FALSE}
+EigenVectors <- eigen(corData)
+EigenVectors$vectors
+```
+Перевіряємо виконання умов aj'*ak {0(j!=k), 1(j==k)} для власних векторів ak.
+
+транспонуємо матрицю власних векторів та перемножуємо їх (транспоновану та звичайну матрицю вл. векторів)
+```{r TranspositionedEigen, echo=FALSE}
+TranspositionedEigen <- t(EigenVectors$vectors)
+print(EigenVectors$vectors %*% TranspositionedEigen)
+```
+Умови виконуються, бо на головній діагоналі стоять 1, а в решті клітинок числа наближені до 0.
+
+### виводимо власний вектор максимального числа
+```{r maxEigenVector, echo=FALSE}
+EigenVectors$vectors[1,]
+```
+Ще дві головні компоненти
+```{r EigenComponents, echo=FALSE}
+EigenVectors$vectors[2,]
+EigenVectors$vectors[3,]
+```
+
+### Знаходимо основні компоненти:
+```{r mainComponents, echo=FALSE}
+MatrixNormalized <- as.matrix(normalizedData)
+mainComponents <- (MatrixNormalized %*% t(EigenVectors$vectors[1:3,]))
+#графіки по кожній компоненті
+for(x in 1:3) { 
+plot(mainComponents[,x], main=sprintf("%s компонента\n", x)
+     , type = "l"
+     , col="red"
+     , xlab = ""
+     , ylab = "")
+}
+```
+
+# Завдання 7 (Кластерний Аналіз)
+Кластеризуємо дані за алгоритмом k-means
+1. Використовуючи k-means, проводимо розбиття початкової множини точок на k підмножин ( k=5; k=7)
+
+### k=5
+
+```{r kmeansCluster5, echo=FALSE}
+StartingKmeans5 <- kmeans(Data, centers = 5)
+library(factoextra)
+fviz_cluster(StartingKmeans5, Data)
+StartingKmeans5
+
+temporary <- Data
+temporary$clusters <- StartingKmeans5$cluster
+```
+
+
+### k=7
+
+```{r kmeansCluster7, echo=FALSE }
+StartingKmeans7 <- kmeans(Data, centers = 7)
+fviz_cluster(StartingKmeans7, Data)
+StartingKmeans7
+
+temporary1 <- Data
+temporary1$clusters <- StartingKmeans7$cluster
+```
+
+
+# Використовуючи k-means, проводимо кластеризацію трьох головних факторів на k підмножин ( k=5; k=7).
+
+
+### k=5
+```{r kmeansMainFactorsCluster5, echo=FALSE}
+MainFactorsKmeans5 <- kmeans(mainComponents, centers = 5)
+fviz_cluster(MainFactorsKmeans5, mainComponents)
+MainFactorsKmeans5
+
+temporary2 <- as.data.frame(mainComponents)
+temporary2$clusters <- MainFactorsKmeans5$cluster
+
+```
+### k=7
+```{r kmeansMainFactorsCluster7, echo=FALSE}
+MainFactorsKmeans7 <- kmeans(mainComponents, centers = 7)
+fviz_cluster(MainFactorsKmeans7, mainComponents)
+MainFactorsKmeans7
+
+temporary3 <- as.data.frame(mainComponents)
+temporary3$clusters <- MainFactorsKmeans7$cluster
+```
