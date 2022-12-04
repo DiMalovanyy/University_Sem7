@@ -3,13 +3,13 @@
 ## Info
 - **Lecturer:** Коробова Марина Віталіївна
 - **Practice:** Троценко Ярослав Павлович [телеграм](https://t.me/yaroslav_trotsenko) 
-- **Variant:** 7
+- **Variant:** 11
 
 ## Todo
 
-- [ ] Lab 1
-- [ ] Lab 2
-- [ ] Lab 3
+- [X] Lab 1
+- [X] Lab 2
+- [X] Lab 3
 - [ ] Lab 4
 - [ ] Lab 5
 
