@@ -1,4 +1,3 @@
-import numpy as np
 from Pyro4 import expose
 import array
 
@@ -22,8 +21,15 @@ class Solver:
                 resultMatrixSlice = self.workers[workerIdx].mymap(workerIdx * step, min((workerIdx + 1) * step, len(A) - 1), A, B)
             mapped[workerIdx] = resultMatrixSlice
 
-        self.write_output(mapped)
+        self.write_output(self.myreduce(mapped))
 
+    @staticmethod
+    @expose
+    def myreduce(mapped):
+        output = {}
+        for idx, resultRows in mapped.items():
+            output[idx] = resultRows.value
+        return output
 
     @staticmethod
     @expose
@@ -41,7 +47,8 @@ class Solver:
             resultRow = []
             for columnIdx in range(0, matrix_B_columns_len):
                 column = [row[columnIdx] for row in matrix_B]
-                resultRow.append(np.dot(matrix_A[rowIdx], column))
+                dot_product = sum([i*j for (i, j) in zip(matrix_A[rowIdx], column)])
+                resultRow.append(dot_product)
             resultMatrixSlice.append(resultRow)
 
         return resultMatrixSlice
@@ -71,7 +78,11 @@ class Solver:
         for key, val in sorted(resultDict.items()):
             result.append(val)
 
-        with open(self.output_file_name, 'wb') as f:
+        with open(self.output_file_name, 'w') as f:
             for row in result:
-                np.savetxt(f, row, fmt='%d')
+                f.write('\n'.join(map(str,row)) + '\n')
+
+
+
+
 
